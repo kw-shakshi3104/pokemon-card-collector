@@ -33,7 +33,7 @@ def collect_cards_async(url: str) -> list:
     # 画像を取得
     elements = soup.find_all('img')
     # カード画像のみに絞る
-    cards = [element for element in elements if '/assets/images/card_images/' in element.attrs['src']]
+    cards = [element for element in elements if '/assets/outputs/card_images/' in element.attrs['src']]
 
     return cards
 
@@ -70,6 +70,6 @@ if __name__ == "__main__":
 
     # 画像を取得
     for img_url, img_name in tqdm(zip(cards["image_url"], cards["image_name"])):
-        output_filepath = Path(f"./images/{img_name}")
+        output_filepath = Path(f"outputs/{img_name}")
         download_image(img_url, output_filepath)
         time.sleep(1)
