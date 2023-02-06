@@ -73,3 +73,6 @@ if __name__ == "__main__":
         output_filepath = Path(f"outputs/{img_name}")
         download_image(img_url, output_filepath)
         time.sleep(1)
+
+    # 画像のリストを出力
+    cards.to_csv("./outputs/pokemon_card_list.csv", index=False, encoding='utf-8_sig')
