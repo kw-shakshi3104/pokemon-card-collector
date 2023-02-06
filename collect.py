@@ -14,10 +14,16 @@ from pathlib import Path
 # https://it-syoya-engineer.com/python-requests-html/
 # https://qiita.com/uitspitss/items/f131ea79dffd58bc01ae
 
-def collect_cards_async(url: str) -> list:
-    # res = requests.get(url)
-    # html = res.text
+def collect_cards_html(html):
+    soup = BeautifulSoup(html, "html.parser")
+    # 画像を取得
+    elements = soup.find_all('img')
+    # カード画像のみに絞る
+    cards = [element for element in elements if '/assets/outputs/card_images/' in element.attrs['src']]
+    return cards
 
+
+def collect_cards_async(url: str) -> list:
     session = AsyncHTMLSession()
 
     async def process():
@@ -28,13 +34,17 @@ def collect_cards_async(url: str) -> list:
     res = session.run(process)[0]
     html = res.html.html
 
-    soup = BeautifulSoup(html, "html.parser")
+    cards = collect_cards_html(html)
+    return cards
 
-    # 画像を取得
-    elements = soup.find_all('img')
-    # カード画像のみに絞る
-    cards = [element for element in elements if '/assets/outputs/card_images/' in element.attrs['src']]
 
+def collect_cards(url: str) -> list:
+    session = HTMLSession()
+
+    res = session.get(url)
+    res.html.render(sleep=10)
+
+    cards = collect_cards_html(res.html)
     return cards
 
 
@@ -53,7 +63,9 @@ if __name__ == "__main__":
     cards = []
     last_page_idx = 120
     for i in tqdm(range(1, last_page_idx + 1)):
-        cards = cards + collect_cards_async(url + f"&page={i}")
+        temp = collect_cards_async(url + f"&page={i}")
+        # temp = collect_cards(url + f"&page={i}")
+        cards = cards + temp
         time.sleep(20)
 
     # DataFrameに整形する
