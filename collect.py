@@ -19,7 +19,7 @@ def collect_cards_html(html):
     # 画像を取得
     elements = soup.find_all('img')
     # カード画像のみに絞る
-    cards = [element for element in elements if '/assets/outputs/card_images/' in element.attrs['src']]
+    cards = [element for element in elements if '/assets/images/card_images/' in element.attrs['src']]
     return cards
 
 
