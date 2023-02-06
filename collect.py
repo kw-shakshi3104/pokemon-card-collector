@@ -96,5 +96,7 @@ if __name__ == "__main__":
             # リストに追加
             cards.append(card_, ignore_index=True)
 
+        time.sleep(10)
+
     # 画像のリストを出力
     cards.to_csv("./outputs/pokemon_card_list.csv", index=False, encoding='utf-8_sig')
