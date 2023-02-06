@@ -23,7 +23,7 @@ def collect_cards_html(html):
     return cards
 
 
-def collect_cards_async(url: str) -> list:
+def collect_cards_async(url: str) -> (list, int):
     session = AsyncHTMLSession()
 
     async def process():
@@ -35,17 +35,33 @@ def collect_cards_async(url: str) -> list:
     html = res.html.html
 
     cards = collect_cards_html(html)
-    return cards
+    return cards, res.status_code
 
 
-def collect_cards(url: str) -> list:
+def collect_cards(url: str) -> (list, int):
     session = HTMLSession()
 
     res = session.get(url)
     res.html.render(sleep=10)
 
     cards = collect_cards_html(res.html)
-    return cards
+    return cards, res.status_code
+
+
+# DataFrameに整形する
+def to_dataframe(df: list) -> pd.DataFrame:
+    base_image_url = "https://www.pokemon-card.com"
+    df = pd.DataFrame([{
+        "pokemon-name": card.attrs["alt"],
+        "image_url": base_image_url + card.attrs["src"],
+    } for card in df])
+
+    # 画像名とカテゴリ(?)のURLから取得
+    path_urls = list(map(lambda x: Path(x), df["image_url"]))
+    df["image_name"] = list(map(lambda x: x.name, path_urls))
+    df["expansion"] = list(map(lambda x: x.parts[-2], path_urls))
+
+    return df
 
 
 def download_image(url: str, output_filepath: Path):
@@ -60,31 +76,25 @@ if __name__ == "__main__":
     url = "https://www.pokemon-card.com/card-search/index.php?keyword=&se_ta=&regulation_sidebar_form=XY&pg=&illust=&sm_and_keyword=true"
 
     # カード画像のURLのリストを取得
-    cards = []
+    cards = pd.DataFrame()
     last_page_idx = 120
     for i in tqdm(range(1, last_page_idx + 1)):
-        temp = collect_cards_async(url + f"&page={i}")
-        # temp = collect_cards(url + f"&page={i}")
-        cards = cards + temp
-        time.sleep(20)
+        # スクレイピング
+        temp, status = collect_cards_async(url + f"&page={i}")
+        # temp, status = collect_cards(url + f"&page={i}")
 
-    # DataFrameに整形する
-    base_image_url = "https://www.pokemon-card.com"
-    cards = pd.DataFrame([{
-        "pokemon-name": card.attrs["alt"],
-        "image_url": base_image_url + card.attrs["src"],
-    } for card in cards])
+        if status == requests.codes.ok and len(temp) > 0:
+            # DataFrameへ整形
+            card_ = to_dataframe(temp)
 
-    # 画像名とカテゴリ(?)のURLから取得
-    path_urls = list(map(lambda x: Path(x), cards["image_url"]))
-    cards["image_name"] = list(map(lambda x: x.name, path_urls))
-    cards["expansion"] = list(map(lambda x: x.parts[-2], path_urls))
+            # 画像を取得
+            for img_url, img_name in tqdm(zip(card_["image_url"], card_["image_name"])):
+                output_filepath = Path(f"outputs/{img_name}")
+                download_image(img_url, output_filepath)
+                time.sleep(1)
 
-    # 画像を取得
-    for img_url, img_name in tqdm(zip(cards["image_url"], cards["image_name"])):
-        output_filepath = Path(f"outputs/{img_name}")
-        download_image(img_url, output_filepath)
-        time.sleep(1)
+            # リストに追加
+            cards.append(card_, ignore_index=True)
 
     # 画像のリストを出力
     cards.to_csv("./outputs/pokemon_card_list.csv", index=False, encoding='utf-8_sig')
