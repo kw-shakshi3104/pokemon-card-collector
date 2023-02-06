@@ -94,7 +94,7 @@ if __name__ == "__main__":
                 time.sleep(1)
 
             # リストに追加
-            cards.append(card_, ignore_index=True)
+            cards = pd.concat([cards, card_], ignore_index=True)
 
         time.sleep(10)
 
