@@ -88,7 +88,7 @@ if __name__ == "__main__":
             card_ = to_dataframe(temp)
 
             # 画像を取得
-            for img_url, img_name in tqdm(zip(card_["image_url"], card_["image_name"])):
+            for img_url, img_name in zip(card_["image_url"], card_["image_name"]):
                 output_filepath = Path(f"outputs/{img_name}")
                 download_image(img_url, output_filepath)
                 time.sleep(1)
