@@ -52,7 +52,7 @@ def collect_cards(url: str) -> (list, int):
 def to_dataframe(df: list) -> pd.DataFrame:
     base_image_url = "https://www.pokemon-card.com"
     df = pd.DataFrame([{
-        "pokemon-name": card.attrs["alt"],
+        "pokemon_name": card.attrs["alt"],
         "image_url": base_image_url + card.attrs["src"],
     } for card in df])
 
